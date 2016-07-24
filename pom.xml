@@ -19,7 +19,7 @@
   <dependencies>
   	<dependency>
   		<groupId>polenta</groupId>
-  		<artifactId>polentaclient</artifactId>
+  		<artifactId>polentadriver</artifactId>
   		<version>0.0.1-SNAPSHOT</version>
   	</dependency>
   </dependencies>

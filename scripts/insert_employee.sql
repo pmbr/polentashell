@@ -1,4 +1,3 @@
-create bag employee (name string, salary double, birth date, position_id integer)
 insert into employee (name, salary) values ('paulo', 2000.00)
 insert into employee (name, salary) values ('alexandre', 1000.00)
 insert into employee (name, salary) values ('rodrigo', 7000.00)

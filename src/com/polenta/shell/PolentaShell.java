@@ -15,15 +15,37 @@ import com.polenta.driver.PolentaStatement;
 
 public class PolentaShell {
 	
-	public static void main(String[] args) {
-		Console console = System.console();
+	private static String serverHost;
+	private static int serverPort;
+	
+	private static Console console;
+	
+	public static void logConsole(String message) {
+		console.printf(message);
+	}
+	
+	public static void main(String[] args) throws Exception  {
+		console = System.console();
 		
 		String statement;
 		
-		console.printf("Welcome to Polenta Shell\n");
+		console.printf("\nWelcome to Polenta Shell...\n");
+		
+		PolentaShell.serverHost = extractHostFromArguments(args);
+
+		String port = null;
+		try {
+			port = extractPortFromArguments(args);
+			PolentaShell.serverPort = Integer.parseInt(port); 
+		} catch (Exception e) {
+			console.printf("ERROR: %s is not a valid port. PolentaShell will close.", port);
+			System.exit(0);
+		}
+		
+		console.printf("PolentaServer host: %s, port: %d.\n\n", serverHost, serverPort);
 		
 		while (true) {
-			statement = console.readLine("%s", "Enter a Polenta statement: ");
+			statement = console.readLine("%s", "Enter a Polenta statement >> ");
 			if (statement.equals("exit")) {
 				System.exit(0);
 			}
@@ -36,14 +58,39 @@ public class PolentaShell {
 		
 		}
 	}
+
+	protected static String extractHostFromArguments(String[] args) throws Exception {
+		String host = "localhost";
+		if (args != null && args.length > 0) {
+			for (String arg: args) {
+				if (arg.startsWith("--host=")) {
+					host = arg.substring(7);
+				}
+			}
+		}
+		return host;
+	}
+
+	protected static String extractPortFromArguments(String[] args) throws Exception {
+		String port = "3110";
+		if (args != null && args.length > 0) {
+			for (String arg: args) {
+				if (arg.startsWith("--port=")) {
+					port = arg.substring(7);
+				}
+			}
+		}
+		return port;
+	}
 	
 	protected static void executeStatement(String statement) {
-		PolentaConnection connection = PolentaDataSource.getConnection(3110);
+		PolentaConnection connection = PolentaDataSource.getConnection(serverHost, serverPort);
+		if (!connection.isConnected()) return;
 		PolentaStatement ps = connection.createStatement();
 		try {
 			ps.execute(statement);
 		} catch (Exception e) {
-			System.out.println("Statement failed to execute.");
+			console.printf("ERROR: Statement failed to execute.\n");
 		}
 	}
 
@@ -51,13 +98,13 @@ public class PolentaShell {
 		System.out.println("Processing file " + fileName);
 		File file = new File(fileName);
 		if (!file.exists()) {
-			System.out.println("PolentaShell could not find this file.");
+			console.printf("ERROR: PolentaShell could not find this file.\n");
 		} else {
 			BufferedReader reader = null;
 			try {
 				reader = new BufferedReader(new FileReader(file));
 			} catch (FileNotFoundException e) {
-				System.out.println("PolentaShell could not open this file.");
+				console.printf("ERROR: PolentaShell could not open this file.\n");
 			}
 			List<String> statements = new ArrayList<String>();
 			if (reader != null) {
@@ -67,7 +114,7 @@ public class PolentaShell {
 						statements.add(line);
 					}
 				} catch (IOException e) {
-					System.out.println("PolentaShell could not read this file.");
+					console.printf("ERROR: PolentaShell could not read this file.\n");
 				}
 			}
 			if (!statements.isEmpty()) {
@@ -75,7 +122,7 @@ public class PolentaShell {
 					PolentaShell.executeStatement(statement);
 				}
 			} else {
-				System.out.println("File is empty.");
+				console.printf("ERROR: File is empty.");
 			}
 		}
 	}

@@ -1,5 +1,0 @@
-insert into employee (name, salary) values ('paulo', 2000.00)
-insert into employee (name, salary) values ('alexandre', 1000.00)
-insert into employee (name, salary) values ('rodrigo', 7000.00)
-insert into employee (name, salary) values ('fabio', 500.00)
-insert into employee (name, salary) values ('tiago', 300.00)

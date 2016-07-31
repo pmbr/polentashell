@@ -8,23 +8,27 @@ import java.io.OutputStreamWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
-import com.polenta.shell.PolentaShell;
-
 public class PolentaConnection {
 
-	int port;
+	private String host;
+	private int port;
 	private Socket socket;
 	private boolean connected;
 	
 	PolentaConnection(String host, int port) {
+		this.host = host;
+		this.port = port;
+	}
+	
+	public void open() throws Exception {
 		try {
 			socket = new Socket(host, port);
 			socket.setKeepAlive(true);
 			connected = true;
-		} catch (UnknownHostException e) {
-			PolentaShell.logConsole("ERROR: PolentaShell could not connect to PolentaServer.\n");
-		} catch (IOException e) {
-			e.printStackTrace();
+		} catch (java.net.ConnectException ce) {
+			throw new PolentaConnectionException("It was not possible connect to Polenta server on host [" + this.host + "] and port [" + this.port + "].\n");
+		} catch (UnknownHostException uhe) {
+			throw new PolentaConnectionException("It was not possible connect to Polenta server on host [" + this.host + "] and port [" + this.port + "].\n");
 		}
 	}
 	
@@ -40,29 +44,34 @@ public class PolentaConnection {
 	//public void getAutoCommit
 	//public PolentaMetaData getMetaData
 	
-	public String writeToSocket(String statement) {
+	public String writeToSocket(String statement) throws PolentaConnectionException, IOException {
 		BufferedWriter writer;
 		BufferedReader reader;
 		
-		if (connected) {
-			try {
-				writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-				reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-				
-				writer.write(statement);
-				writer.newLine();
-				writer.flush();
+		if (this.connected) {
+			writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+			reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+			
+			writer.write(statement);
+			writer.newLine();
+			writer.flush();
 
-				String response = reader.readLine();
-				
-				return response;
-			} catch (IOException e) {
-				return "IO_EXCEPTION";
+			String response = reader.readLine();
+			if (response == null) {
+				 this.connected = false;
+				 throw new PolentaConnectionException("Connection to server is no longer active.");
 			}
+			
+			return response;
 		} else {
-			return "NOT_CONNECTED";
+			throw new PolentaConnectionException("Connection to server has been closed.");
 		}
 		
+	}
+	
+	public void close() throws Exception {
+		this.connected = false;
+		socket.close();	
 	}
 
 	public boolean isConnected() {

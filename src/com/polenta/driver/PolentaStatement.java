@@ -1,5 +1,7 @@
 package com.polenta.driver;
 
+import java.io.IOException;
+
 public class PolentaStatement {
 
 	private PolentaConnection connection;
@@ -8,8 +10,12 @@ public class PolentaStatement {
 		this.connection = connection;
 	}
 	
-	public String execute(String statement) throws Exception {
-		return connection.writeToSocket(statement);
+	public String execute(String statement) throws IOException, PolentaConnectionException {
+		if (connection.isConnected()) {
+			return connection.writeToSocket(statement);
+		} else {
+			throw new PolentaConnectionException("Connection to server has been closed. Statement cannot be executed"); 
+		}
 	}
 	
 }

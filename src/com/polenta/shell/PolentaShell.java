@@ -20,6 +20,10 @@ public class PolentaShell {
 	
 	private static Console console;
 	
+	private static List<String> executedStatements = new ArrayList<String>();
+	
+	private static PolentaConnection connection;
+	
 	public static void logConsole(String message) {
 		console.printf(message);
 	}
@@ -43,19 +47,43 @@ public class PolentaShell {
 		}
 		
 		console.printf("PolentaServer host: %s, port: %d.\n\n", serverHost, serverPort);
-		
+
 		while (true) {
 			statement = console.readLine("%s", "Enter a Polenta statement >> ");
-			if (statement.equals("exit")) {
+			if (statement.equalsIgnoreCase("QUIT")) {
+				console.printf("PolentaShell will be terminated...\n\n");
 				System.exit(0);
-			}
-			
-			if (statement.startsWith("@@")) {
+			} else if (statement.toUpperCase().startsWith("REPEAT")) {
+				String sequence = extractCommandSequence(statement);
+				if (sequence == null) {
+					console.printf("Enter a command sequence when using repeat.\n\n");
+				} else {
+					int intSequence;
+					try {
+						intSequence = Integer.parseInt(sequence);
+					} catch (Exception e) {
+						intSequence = -1;
+					}
+					if ((intSequence <= 0) || (intSequence > executedStatements.size())) {
+						console.printf("Enter a valid command sequence when using repeat.\n\n");
+					} else {
+						PolentaShell.executeStatement(executedStatements.get(intSequence - 1));
+					}
+				}
+			} else if (statement.startsWith("@@")) {
 				PolentaShell.processFile(statement.substring(2));
 			} else {
 				PolentaShell.executeStatement(statement);
 			}
 		
+		}
+	}
+	
+	protected static String extractCommandSequence(String statement) {
+		if (statement.contains("[") && statement.contains("]") && statement.indexOf("[") < statement.indexOf("]")) {
+			return statement.substring(statement.indexOf("[") + 1, statement.indexOf("]"));
+		} else {
+			return null;
 		}
 	}
 
@@ -84,27 +112,30 @@ public class PolentaShell {
 	}
 	
 	protected static void executeStatement(String statement) {
-		PolentaConnection connection = PolentaDataSource.getConnection(serverHost, serverPort);
-		if (!connection.isConnected()) return;
+		connection = PolentaDataSource.getConnection(serverHost, serverPort);
 		PolentaStatement ps = connection.createStatement();
+		int commandSequence = executedStatements.size() + 1;
 		try {
-			ps.execute(statement);
+			executedStatements.add(statement);
+			PolentaShell.logConsole("\nExecuting statement [" + commandSequence + "] >> " + statement + "\n");
+			String response = ps.execute(statement);
+			PolentaShell.logConsole("PolentaServer response [" + commandSequence + "] >> " + response + "\n\n");
 		} catch (Exception e) {
-			console.printf("ERROR: Statement failed to execute.\n");
+			console.printf("ERROR: Statement failed to execute [" + commandSequence + "].\n\n");
 		}
 	}
 
 	protected static void processFile(String fileName) {
-		System.out.println("Processing file " + fileName);
+		console.printf("\nProcessing script file: " + fileName + "\n");
 		File file = new File(fileName);
 		if (!file.exists()) {
-			console.printf("ERROR: PolentaShell could not find this file.\n");
+			console.printf("ERROR: PolentaShell could not find this file.\n\n");
 		} else {
 			BufferedReader reader = null;
 			try {
 				reader = new BufferedReader(new FileReader(file));
 			} catch (FileNotFoundException e) {
-				console.printf("ERROR: PolentaShell could not open this file.\n");
+				console.printf("ERROR: PolentaShell could not open this file.\n\n");
 			}
 			List<String> statements = new ArrayList<String>();
 			if (reader != null) {
@@ -114,7 +145,7 @@ public class PolentaShell {
 						statements.add(line);
 					}
 				} catch (IOException e) {
-					console.printf("ERROR: PolentaShell could not read this file.\n");
+					console.printf("ERROR: PolentaShell could not read this file.\n\n");
 				}
 			}
 			if (!statements.isEmpty()) {

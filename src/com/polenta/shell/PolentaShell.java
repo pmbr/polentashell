@@ -33,7 +33,7 @@ public class PolentaShell {
 		
 		String statement;
 		
-		console.printf("\nWelcome to Polenta Shell...\n");
+		console.printf("\nWelcome to Polenta Shell...\n\n");
 		
 		PolentaShell.serverHost = extractHostFromArguments(args);
 
@@ -42,11 +42,20 @@ public class PolentaShell {
 			port = extractPortFromArguments(args);
 			PolentaShell.serverPort = Integer.parseInt(port); 
 		} catch (Exception e) {
-			console.printf("ERROR: %s is not a valid port. PolentaShell will close.", port);
+			console.printf("%s is not a valid port. PolentaShell will close.", port);
 			System.exit(0);
 		}
 		
-		console.printf("PolentaServer host: %s, port: %d.\n\n", serverHost, serverPort);
+		
+		connection = PolentaDataSource.getConnection(serverHost, serverPort);
+		
+		try {
+			connection.open();
+			console.printf("Connected to PolentaServer on host [%s] and port [%d]\n\n", serverHost, serverPort);
+		} catch (Exception e) {
+			console.printf("PolentaShell will close. An exception occured: " + e.getMessage() + "\n");
+			System.exit(0);
+		}
 
 		while (true) {
 			statement = console.readLine("%s", "Enter a Polenta statement >> ");
@@ -112,7 +121,6 @@ public class PolentaShell {
 	}
 	
 	protected static void executeStatement(String statement) {
-		connection = PolentaDataSource.getConnection(serverHost, serverPort);
 		PolentaStatement ps = connection.createStatement();
 		int commandSequence = executedStatements.size() + 1;
 		try {
@@ -121,7 +129,7 @@ public class PolentaShell {
 			String response = ps.execute(statement);
 			PolentaShell.logConsole("PolentaServer response [" + commandSequence + "] >> " + response + "\n\n");
 		} catch (Exception e) {
-			console.printf("ERROR: Statement failed to execute [" + commandSequence + "].\n\n");
+			console.printf("Statement [" + commandSequence + "] failed to execute. Error: " + e.getMessage() + "\n\n");
 		}
 	}
 
@@ -129,13 +137,13 @@ public class PolentaShell {
 		console.printf("\nProcessing script file: " + fileName + "\n");
 		File file = new File(fileName);
 		if (!file.exists()) {
-			console.printf("ERROR: PolentaShell could not find this file.\n\n");
+			console.printf("PolentaShell could not find this file.\n\n");
 		} else {
 			BufferedReader reader = null;
 			try {
 				reader = new BufferedReader(new FileReader(file));
 			} catch (FileNotFoundException e) {
-				console.printf("ERROR: PolentaShell could not open this file.\n\n");
+				console.printf("PolentaShell could not open this file.\n\n");
 			}
 			List<String> statements = new ArrayList<String>();
 			if (reader != null) {
@@ -145,7 +153,7 @@ public class PolentaShell {
 						statements.add(line);
 					}
 				} catch (IOException e) {
-					console.printf("ERROR: PolentaShell could not read this file.\n\n");
+					console.printf("PolentaShell could not read this file.\n\n");
 				}
 			}
 			if (!statements.isEmpty()) {
@@ -153,7 +161,7 @@ public class PolentaShell {
 					PolentaShell.executeStatement(statement);
 				}
 			} else {
-				console.printf("ERROR: File is empty.");
+				console.printf("File is empty.");
 			}
 		}
 	}

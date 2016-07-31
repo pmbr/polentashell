@@ -52,9 +52,8 @@ public class PolentaConnection {
 				writer.write(statement);
 				writer.newLine();
 				writer.flush();
-				
+
 				String response = reader.readLine();
-				PolentaShell.logConsole("PolentaServer response >> " + response + "\n\n");
 				
 				return response;
 			} catch (IOException e) {

@@ -24,10 +24,6 @@ public class PolentaShell {
 	
 	private static PolentaConnection connection;
 	
-	public static void logConsole(String message) {
-		console.printf(message);
-	}
-	
 	public static void main(String[] args) throws Exception  {
 		console = System.console();
 		
@@ -125,9 +121,9 @@ public class PolentaShell {
 		int commandSequence = executedStatements.size() + 1;
 		try {
 			executedStatements.add(statement);
-			PolentaShell.logConsole("\nExecuting statement [" + commandSequence + "] >> " + statement + "\n");
+			console.printf("\nExecuting statement [" + commandSequence + "] >> " + statement + "\n");
 			String response = ps.execute(statement);
-			PolentaShell.logConsole("PolentaServer response [" + commandSequence + "] >> " + response + "\n\n");
+			console.printf("PolentaServer response [" + commandSequence + "] >> " + response + "\n\n");
 		} catch (Exception e) {
 			console.printf("Statement [" + commandSequence + "] failed to execute. Error: " + e.getMessage() + "\n\n");
 		}

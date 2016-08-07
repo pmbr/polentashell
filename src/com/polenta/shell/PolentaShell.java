@@ -11,6 +11,7 @@ import java.util.List;
 
 import com.polenta.driver.PolentaConnection;
 import com.polenta.driver.PolentaDataSource;
+import com.polenta.driver.PolentaResultSet;
 import com.polenta.driver.PolentaStatement;
 
 public class PolentaShell {
@@ -122,8 +123,14 @@ public class PolentaShell {
 		try {
 			executedStatements.add(statement);
 			console.printf("\nExecuting statement [" + commandSequence + "] >> " + statement + "\n");
-			String response = ps.execute(statement);
-			console.printf("PolentaServer response [" + commandSequence + "] >> " + response + "\n\n");
+			if (statement.toUpperCase().startsWith("SELECT")) {
+				PolentaResultSet resultSet = ps.executeQuery(statement);
+				console.printf(resultSet.toString());
+				console.printf("Size of returned result set: " + resultSet.size() + "\n\n");
+			} else {
+				ps.execute(statement);
+				console.printf("PolentaServer response [" + commandSequence + "] >> Statement or command successfully processed. \n\n");
+			}
 		} catch (Exception e) {
 			console.printf("Statement [" + commandSequence + "] failed to execute. Error: " + e.getMessage() + "\n\n");
 		}

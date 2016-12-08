@@ -43,7 +43,6 @@ public class PolentaShell {
 			System.exit(0);
 		}
 		
-		
 		connection = PolentaDataSource.getConnection(serverHost, serverPort);
 		
 		try {

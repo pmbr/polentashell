@@ -6,6 +6,15 @@
 	<version>0.4.0</version>
 	<build>
 		<sourceDirectory>src</sourceDirectory>
+		<resources>
+			<resource>
+				<directory>src/com/polenta/shell/app/view</directory>
+				<targetPath>com/polenta/shell/app/view</targetPath>
+				<includes>
+					<include>**/*.fxml</include>
+				</includes>
+			</resource>
+		</resources>
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
